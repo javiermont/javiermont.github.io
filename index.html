@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="img/favicon.ico">
+  <title>Home - Charset and Engine in MySql</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="js/jquery-2.1.1.min.js" defer></script>
+  <script src="js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Charset and Engine in MySql</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href=".">Home</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#introduction">Introduction</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#iso-8851-1-to-utf-8-in-mysql">ISO-8851-1 to UTF-8 in MySql</a></li>
+        
+            <li><a class="toctree-l3" href="#myisam-to-innodb-in-mysql">MyISAM to InnoDB In MySql</a></li>
+        
+            <li><a class="toctree-l3" href="#how-to-know-length-of-index-innodb-in-uft-8-max-191-characters">How to know length of index InnoDb in uft-8 (max 191 characters)</a></li>
+        
+            <li><a class="toctree-l3" href="#service">Service</a></li>
+        
+            <li><a class="toctree-l3" href="#resources">Resources</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Charset and Engine in MySql</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="introduction">Introduction</h1>
+<p>This document details step by step the process of changing the database from latin1 to utf-8 encoding and table engine MyIsam to InnoDb in Mysql.</p>
+<h2 id="iso-8851-1-to-utf-8-in-mysql">ISO-8851-1 to UTF-8 in MySql</h2>
+<p>1.- Make sure mysql-client is installed. If not, then :</p>
+<pre><code>sudo apt install mysql-client
+or
+sudo apt-get install mysql-client
+</code></pre>
+<p>2.- Open php.ini: /etc/php/7.0/cli/php.ini or /etc/php/7.0/apache2/php.ini </p>
+<pre><code>; PHP's default character set is set to UTF-8. 
+; http://php.net/default-charset 
+default_charset = "UTF-8"
+</code></pre>
+<p>3.- Disconnect all active applications connected to mysql and take a backup of the database. </p>
+<p>4.- Speak UTF-8 everywhere. Update mysqld, mysql and client settings as follows(/etc/mysql/*.cnf) </p>
+<pre><code>4.1.- /etc/mysql/mariadb.conf.d/50-server.cnf
+
+[mysqld] 
+character_set_server=utf8mb4 
+collation_server=utf8mb4_unicode_ci 
+#The following should be set if you are using mysql version 5.6 or lower 
+innodb_file_format=barracuda 
+innodb_file_per_table=1 
+innodb_large_prefix=1 
+innodb_data_file_path = ibdata1:50M:autoextend:max:2G
+
+innodb_buffer_pool_size = 1536M 
+innodb_log_file_size = 128M 
+innodb_log_buffer_size = 8M 
+innodb_flush_log_at_trx_commit = 0 
+innodb_flush_method = O_DIRECT 
+innodb_doublewrite = 0
+
+4.2. /etc/mysql/mariadb.conf.d/50-client.cnf 
+[client] 
+default-character-set = utf8mb4
+
+[mysql] 
+default-character-set = utf8mb4
+
+[mysqld] 
+character_set_server=utf8mb4 
+collation_server=utf8mb4_unicode_ci 
+#The following should be set if you are using mysql version 5.6 or lower 
+innodb_file_format=barracuda 
+innodb_file_per_table=1 
+innodb_large_prefix=1 
+innodb_data_file_path = ibdata1:50M:autoextend:max:2G
+
+innodb_buffer_pool_size = 1536M 
+innodb_log_file_size = 128M 
+innodb_log_buffer_size = 8M 
+innodb_flush_log_at_trx_commit = 0 
+innodb_flush_method = O_DIRECT 
+innodb_doublewrite = 0
+</code></pre>
+<p>5.- Restart mysql service </p>
+<pre><code>/etc/init.d/mysql restart
+</code></pre>
+<p>6.- Connect to mysql using command line: </p>
+<pre><code>mysql -u databasename
+</code></pre>
+<p>7- Run the following query: </p>
+<pre><code>SHOW VARIABLES WHERE Variable_name LIKE 'character\_set\_%' OR Variable_name LIKE 'collation%';
+</code></pre>
+<p>Output: </p>
+<pre><code>+--------------------------+--------------------+ 
+| Variable_name | Value | 
++--------------------------+--------------------+ 
+| character_set_client | utf8mb4 | 
+| character_set_connection | utf8mb4 | 
+| character_set_database | utf8mb4 | 
+| character_set_filesystem | binary | 
+| character_set_results | utf8mb4 | 
+| character_set_server | utf8mb4 | 
+| character_set_system | utf8 | 
+| collation_connection | utf8mb4_general_ci | 
+| collation_database | utf8mb4_unicode_ci | 
+| collation_server | utf8mb4_unicode_ci | 
++--------------------------+--------------------+
+</code></pre>
+<p>8.- Convert your Latin-1 collated tables to UTF-8 </p>
+<pre><code>8.1.- To optimize this process, the non-primary indices of each table have been eliminated. After the process they will be re-established. For this purpose:
+
+    - Save index no primaries:
+
+    mysql -uroot -e"SELECT CONCAT('ALTER TABLE ',TABLE_NAME,' ADD ',IF(NON_UNIQUE=1,'','UNIQUE'),' INDEX ',INDEX_NAME,' (',group_concat(COLUMN_NAME),');') FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = 'databasename' AND INDEX_NAME!='PRIMARY' GROUP BY TABLE_NAME,INDEX_NAME;" &gt; creacion_indices.sql
+    cat creacion_indices.sql | sed 1d &gt; creacion_indices_new.sql
+
+    - Drop index no primaries:
+
+    mysql -uroot -e"SELECT CONCAT('DROP INDEX ',INDEX_NAME,' ON ',TABLE_NAME,';') FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = 'databasename' AND INDEX_NAME!='PRIMARY' GROUP BY TABLE_NAME,INDEX_NAME;" &gt; eliminar_indices.sql
+    cat eliminar_indices.sql | sed 1d &gt; eliminar_indices_new.sql
+    mysql -v -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DB" &lt; eliminar_indices_new.sql
+
+Individual queries on each table :
+
+    8.2.- Changing the default charset of the database: ALTER DATABASE databasename CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    8.3.- Changing the default charset of individual tables: ALTER TABLE tablename CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+    8.4.- Changing the default charset of individual column of tables: ALTER TABLE tablename CHANGE columname columname VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '';
+
+    8.5.- Restore non-primary indexes removed:
+
+        Create index no primaries:
+        mysql -v -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DB" &lt; creacion_indices_new.sql
+</code></pre>
+<p>9.- Repair the tables for any problems in-case</p>
+<pre><code>mysqlcheck -v -u root -p --auto-repair --optimize --databases databasename
+</code></pre>
+<p>10.- Stored Procedures: </p>
+<pre><code>mysqldump -u root -p -dtR databasename &gt; store_procedures.sql
+
+perl -i -pe 's/ALTER DATABASE `trabajos2007` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;//' store_procedures.sql 
+perl -i -pe 's/ALTER DATABASE `trabajos2007` CHARACTER SET latin1 COLLATE latin1_spanish_ci ;//' store_procedures.sql 
+perl -i -pe 's/ALTER DATABASE `trabajos2007` CHARACTER SET latin1 COLLATE latin1_swedish_ci ;//' store_procedures.sql 
+perl -i -pe 's/CHARACTER SET latin1 COLLATE latin1_spanish_ci/CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci/' store_procedures.sql 
+perl -i -pe 's/CHARACTER SET latin1 COLLATE latin1_swedish_ci/CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci/' store_procedures.sql 
+perl -i -pe 's/SET character_set_client = latin1/SET character_set_client = utf8/' store_procedures.sql 
+perl -i -pe 's/SET character_set_results = latin1/SET character_set_results = utf8/' store_procedures.sql 
+perl -i -pe 's/SET collation_connection = latin1_spanish_ci/SET collation_connection = utf8mb4_general_ci/' store_procedures.sql 
+perl -i -pe 's/SET collation_connection = latin1_swedish_ci/SET collation_connection = utf8mb4_general_ci/' store_procedures.sql 
+perl -i -pe 's/CHARSET latin1/CHARSET utf8mb4/' store_procedures.sql
+
+mysql -u root -p databasename &lt; store_procedures.sql
+</code></pre>
+<h2 id="myisam-to-innodb-in-mysql">MyISAM to InnoDB In MySql</h2>
+<p>1.- Speed things up before changing MyISAM to InnoDB. Before you convert the table engine, you can adjust the order so that the primary key column is in order: </p>
+<pre><code>ALTER TABLE tablename ORDER BY 'primary_key_column';
+</code></pre>
+<p>2.- List a complete ALTER TABLE statement for MyISAM tables. First of all: the following query will list an ALTER TABLE statement for all tables in your database: </p>
+<pre><code>ALTER TABLE tablename ENGINE=InnoDB;
+</code></pre>
+<p>3.- Optimize all InnoDB tables with one prepared statement: Use the following statement to optimize all MySQL tables in your database: </p>
+<pre><code>OPTIMIZE TABLE tablename;
+</code></pre>
+<h2 id="how-to-know-length-of-index-innodb-in-uft-8-max-191-characters">How to know length of index InnoDb in uft-8 (max 191 characters)</h2>
+<p>Example: first execute this sentence</p>
+<pre><code>select ROUND(SUM(LENGTH(columname)&lt;10)*100/COUNT(columname),2) AS pct_length_10,ROUND(SUM(LENGTH(columname)&lt;20)*100/COUNT(columname),2) AS pct_length_20, 
+ROUND(SUM(LENGTH(columname)&lt;50)*100/COUNT(columname),2) AS pct_length_50, 
+ROUND(SUM(LENGTH(columname)&lt;100)*100/COUNT(columname),2) AS pct_length_100 FROM tablename;
+</code></pre>
+<p>Result:</p>
+<pre><code>pct_length_10, pct_length_20, pct_length_50, pct_length_100
+'0.00', '100.00', '100.00', '100.00'
+</code></pre>
+<p>Choice the number of characters you get in the first 100%, remember max 191 characters. In this example, the lenght of the index will be 20:</p>
+<pre><code>ALTER TABLE tablename CHANGE COLUMN columname columname VARCHAR(191) NOT NULL ,CHANGE COLUMN devicename devicename VARCHAR(20) NOT NULL;
+</code></pre>
+<h2 id="service">Service</h2>
+<p>The firts thing to do is change charset to utf-8 of the files of service.</p>
+<p>1) Convert phtml,php,inc,plib,html,thtml files extension (don’t conver images, document, certificates, etc) a utf-8. </p>
+<p>Each folder that you can modify has to perform this process. The next example is made for “programas” folder:</p>
+<pre><code>cd /home/service/foulder/
+find . -type d &gt;dirs.txt
+cd ..
+mkdir foulder_utf8
+cd foulder_utf8
+xargs mkdir -p &lt; ../foulder/dirs.txt
+cd ../foulder/
+rm dirs.txt
+find . -type f -exec iconv -f iso-8859-1 -t utf-8 "{}" -o /home/service/foulder_utf8/"{}" \;
+cd ..
+mv foulder foulder_iso
+mv foulder_utf8 foulder 
+rm foulder_iso
+</code></pre>
+<p>2) Changing iso-8859-1 to utf-8: </p>
+<pre><code>a) Headers: header(‘Content-Type: text/html; charset=utf-8’);
+
+b) Xml: &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+
+c) HTML content:
+&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;
+&lt;form accept-charset="utf-8"&gt;
+
+d) Functions: htmlspecialchars, htmlentities
+htmlspecialchars($str, ENT_NOQUOTES, "UTF-8")
+</code></pre>
+<p>3) PHP code: </p>
+<pre><code>a) MyIsam to InnoDb
+Change ENGINE=MYISAM DEFAULT CHARSET=latin1 for ENGINE=InnoDb CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci 
+Change CHARSET latin1 for CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+b) DB connection:
+// CODIFICACION UTF-8
+mysqli_options($conn, MYSQLI_SET_CHARSET_NAME, "utf8mb4");
+
+c) Mailer charset:
+// CHARSET utf-8
+$Mailer-&gt;CharSet = 'UTF-8';
+
+d) In “json_encode” function:
+Do not code texts: “encodeURI(escape(“, “encodeURI(“, “escape(“
+
+e) In ajax calls ,do not code texts: 
+“decodeURI(unescape(“
+Apply contentType: application/x-www-form-urlencoded; charset=UTF-8
+
+f) In javascript, do not code texts: 
+“encodeURIComponent(escape(“
+“encodeURIComponent(“
+“escape(“
+“encodeURI(escape(“
+“encodeURI(“
+“unescape(decodeURI(“
+“unescape(“
+“decodeURI(“
+
+g) In “json_encode” functions, in $_GET, $_POST and API calls, remove code texts, do not apply “uft8_decode” and “utf8_encode” functions.
+</code></pre>
+<h2 id="resources">Resources</h2>
+<p>https://gist.github.com/mdemblani/34d30015f24e1927736f189b88be143a
+https://www.toptal.com/php/codificacion-de-datos-una-guia-utf-8-para-php-y-mysql/es
+https://codex.wordpress.org/Converting_Database_Character_Sets
+http://rocketmodule.com/blog/convert-your-mysql-database-myisam-innodb-and-get-ready-drupal-7-same-time/index.html
+https://blog.ghost3k.net/articles/mysql/30/mysql-converting-large-tables-to-innodb-faster
+https://diego.com.es/codificacion-de-strings-en-php
+https://medium.com/@jesseproudman/getting-out-of-mysql-character-set-hell-8431e75383db</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2018-11-30 09:35:55
+-->
